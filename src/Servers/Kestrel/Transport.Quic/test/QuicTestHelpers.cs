@@ -78,7 +78,7 @@ internal static class QuicTestHelpers
         features.Set(new TlsConnectionCallbackOptions
         {
             ApplicationProtocols = sslServerAuthenticationOptions.ApplicationProtocols,
-            OnConnection = context => ValueTask.FromResult(sslServerAuthenticationOptions)
+            OnConnection = (context, cancellationToken) => ValueTask.FromResult(sslServerAuthenticationOptions)
         });
 
         return features;

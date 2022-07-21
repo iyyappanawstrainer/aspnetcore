@@ -1,6 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Diagnostics;
 using System.Net;
 using System.Net.Quic;
 using System.Net.Security;
@@ -21,6 +22,7 @@ internal sealed class QuicConnectionListener : IMultiplexedConnectionListener, I
     private readonly QuicListenerOptions _quicListenerOptions;
     private bool _disposed;
     private QuicListener? _listener;
+    private QuicConnectionContext? _currentAcceptingConnection;
 
     public QuicConnectionListener(
         QuicTransportOptions options,
@@ -53,13 +55,15 @@ internal sealed class QuicConnectionListener : IMultiplexedConnectionListener, I
             ListenBacklog = options.Backlog,
             ConnectionOptionsCallback = async (connection, helloInfo, cancellationToken) =>
             {
-                var serverAuthenticationOptions = await _tlsConnectionOptions.OnConnection(new TlsConnectionCallbackContext
+                _currentAcceptingConnection = new QuicConnectionContext(connection, _context);
+
+                var context = new TlsConnectionCallbackContext
                 {
-                    CancellationToken = cancellationToken,
                     ClientHelloInfo = helloInfo,
                     State = _tlsConnectionOptions.OnConnectionState,
-                    Connection = null!,
-                });
+                    Connection = _currentAcceptingConnection,
+                };
+                var serverAuthenticationOptions = await _tlsConnectionOptions.OnConnection(context, cancellationToken);
 
                 // If the callback didn't set protocols then use the listener's list of protocols.
                 if (serverAuthenticationOptions.ApplicationProtocols == null)
@@ -124,7 +128,11 @@ internal sealed class QuicConnectionListener : IMultiplexedConnectionListener, I
         try
         {
             var quicConnection = await _listener.AcceptConnectionAsync(cancellationToken);
-            var connectionContext = new QuicConnectionContext(quicConnection, _context);
+            var connectionContext = _currentAcceptingConnection;
+
+            // Verify the connection context was created and set correctly.
+            Debug.Assert(connectionContext != null);
+            Debug.Assert(connectionContext.GetInnerConnection() == quicConnection);
 
             QuicLog.AcceptedConnection(_log, connectionContext);
 

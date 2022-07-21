@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net.Security;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Microsoft.AspNetCore.Connections;
@@ -17,7 +18,7 @@ public class TlsConnectionCallbackOptions
     /// <summary>
     /// The callback to invoke per connection. This property is required.
     /// </summary>
-    public Func<TlsConnectionCallbackContext, ValueTask<SslServerAuthenticationOptions>> OnConnection { get; set; } = default!;
+    public Func<TlsConnectionCallbackContext, CancellationToken, ValueTask<SslServerAuthenticationOptions>> OnConnection { get; set; } = default!;
 
     /// <summary>
     /// Optional application state to flow to the <see cref="OnConnection"/> callback.

@@ -3,6 +3,7 @@
 
 #nullable enable
 
+using System.IO.Pipelines;
 using System.Linq;
 using System.Net;
 using System.Net.Security;
@@ -63,7 +64,7 @@ internal sealed class TransportManager
             features.Set(new TlsConnectionCallbackOptions
             {
                 ApplicationProtocols = sslServerAuthenticationOptions.ApplicationProtocols ?? new List<SslApplicationProtocol> { SslApplicationProtocol.Http3 },
-                OnConnection = context => ValueTask.FromResult(sslServerAuthenticationOptions),
+                OnConnection = (context, cancellationToken) => ValueTask.FromResult(sslServerAuthenticationOptions),
                 OnConnectionState = null,
             });
         }
@@ -72,14 +73,14 @@ internal sealed class TransportManager
             features.Set(new TlsConnectionCallbackOptions
             {
                 ApplicationProtocols = new List<SslApplicationProtocol> { SslApplicationProtocol.Http3 },
-                OnConnection = context =>
+                OnConnection = (context, cancellationToken) =>
                 {
                     return listenOptions.HttpsCallbackOptions.OnConnection(new TlsHandshakeCallbackContext
                     {
                         ClientHelloInfo = context.ClientHelloInfo,
-                        CancellationToken = context.CancellationToken,
+                        CancellationToken = cancellationToken,
                         State = context.State,
-                        Connection = context.Connection,
+                        Connection = new ConnectionContextAdapter(context.Connection),
                     });
                 },
                 OnConnectionState = listenOptions.HttpsCallbackOptions.OnConnectionState,
@@ -89,6 +90,49 @@ internal sealed class TransportManager
         var transport = await _multiplexedTransportFactory.BindAsync(endPoint, features, cancellationToken).ConfigureAwait(false);
         StartAcceptLoop(new GenericMultiplexedConnectionListener(transport), c => multiplexedConnectionDelegate(c), listenOptions.EndpointConfig);
         return transport.EndPoint;
+    }
+
+    /// <summary>
+    /// TlsHandshakeCallbackContext.Connection is ConnectionContext but QUIC connection only implements BaseConnectionContext.
+    /// </summary>
+    private sealed class ConnectionContextAdapter : ConnectionContext
+    {
+        private readonly BaseConnectionContext _inner;
+
+        public ConnectionContextAdapter(BaseConnectionContext inner) => _inner = inner;
+
+        public override IDuplexPipe Transport
+        {
+            get => throw new NotSupportedException("Not supported by HTTP/3 connections.");
+            set => throw new NotSupportedException("Not supported by HTTP/3 connections.");
+        }
+        public override string ConnectionId
+        {
+            get => _inner.ConnectionId;
+            set => _inner.ConnectionId = value;
+        }
+        public override IFeatureCollection Features => _inner.Features;
+        public override IDictionary<object, object?> Items
+        {
+            get => _inner.Items;
+            set => _inner.Items = value;
+        }
+        public override EndPoint? LocalEndPoint
+        {
+            get => _inner.LocalEndPoint;
+            set => _inner.LocalEndPoint = value;
+        }
+        public override EndPoint? RemoteEndPoint
+        {
+            get => _inner.RemoteEndPoint;
+            set => _inner.RemoteEndPoint = value;
+        }
+        public override CancellationToken ConnectionClosed
+        {
+            get => _inner.ConnectionClosed;
+            set => _inner.ConnectionClosed = value;
+        }
+        public override ValueTask DisposeAsync() => _inner.DisposeAsync();
     }
 
     private void StartAcceptLoop<T>(IConnectionListener<T> connectionListener, Func<T, Task> connectionDelegate, EndpointConfig? endpointConfig) where T : BaseConnectionContext

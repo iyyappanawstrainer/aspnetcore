@@ -25,13 +25,8 @@ public class TlsConnectionCallbackContext
     public object? State { get; set; }
 
     /// <summary>
-    /// The token to monitor for cancellation requests.
-    /// </summary>
-    public CancellationToken CancellationToken { get; set; }
-
-    /// <summary>
     /// Information about an individual connection.
     /// </summary>
-    public ConnectionContext Connection { get; set; } = default!;
+    public BaseConnectionContext Connection { get; set; } = default!;
 }
 #endif

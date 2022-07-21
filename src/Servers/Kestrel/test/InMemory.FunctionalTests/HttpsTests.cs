@@ -442,7 +442,7 @@ public class HttpsTests : LoggedTest
         var sslOptions = bindFeatures.Get<TlsConnectionCallbackOptions>();
         Assert.NotNull(sslOptions);
 
-        var sslServerAuthenticationOptions = await sslOptions.OnConnection(new TlsConnectionCallbackContext());
+        var sslServerAuthenticationOptions = await sslOptions.OnConnection(new TlsConnectionCallbackContext(), CancellationToken.None);
         Assert.Equal(_x509Certificate2, sslServerAuthenticationOptions.ServerCertificate);
     }
 
@@ -486,7 +486,7 @@ public class HttpsTests : LoggedTest
         var tlsOptions = bindFeatures.Get<TlsConnectionCallbackOptions>();
         Assert.NotNull(tlsOptions);
 
-        var sslServerAuthenticationOptions = await tlsOptions.OnConnection(new TlsConnectionCallbackContext());
+        var sslServerAuthenticationOptions = await tlsOptions.OnConnection(new TlsConnectionCallbackContext(), CancellationToken.None);
         Assert.Equal(_x509Certificate2, sslServerAuthenticationOptions.ServerCertificate);
     }
 
@@ -585,7 +585,7 @@ public class HttpsTests : LoggedTest
                     listenOptions.Protocols = HttpProtocols.Http3;
                     listenOptions.UseHttps((SslStream stream, SslClientHelloInfo clientHelloInfo, object state, CancellationToken cancellationToken) =>
                     {
-                        return ValueTask.FromResult((new SslServerAuthenticationOptions()));
+                        return ValueTask.FromResult(new SslServerAuthenticationOptions());
                     }, state: testState);
                 });
             },
