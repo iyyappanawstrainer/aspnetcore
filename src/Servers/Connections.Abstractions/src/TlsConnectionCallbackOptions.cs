@@ -12,7 +12,7 @@ namespace Microsoft.AspNetCore.Connections;
 /// <summary>
 /// Options used to configure a per connection callback for TLS configuration.
 /// </summary>
-public class TlsConnectionOptions
+public class TlsConnectionCallbackOptions
 {
     /// <summary>
     /// The callback to invoke per connection. This property is required.

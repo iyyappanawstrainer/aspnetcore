@@ -16,7 +16,7 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Transport.Quic.Internal;
 internal sealed class QuicConnectionListener : IMultiplexedConnectionListener, IAsyncDisposable
 {
     private readonly ILogger _log;
-    private readonly TlsConnectionOptions _tlsConnectionOptions;
+    private readonly TlsConnectionCallbackOptions _tlsConnectionOptions;
     private readonly QuicTransportContext _context;
     private readonly QuicListenerOptions _quicListenerOptions;
     private bool _disposed;
@@ -26,7 +26,7 @@ internal sealed class QuicConnectionListener : IMultiplexedConnectionListener, I
         QuicTransportOptions options,
         ILogger log,
         EndPoint endpoint,
-        TlsConnectionOptions tlsConnectionOptions)
+        TlsConnectionCallbackOptions tlsConnectionOptions)
     {
         if (!QuicListener.IsSupported)
         {

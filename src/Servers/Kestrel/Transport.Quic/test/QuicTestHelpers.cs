@@ -52,7 +52,7 @@ internal static class QuicTestHelpers
         return (QuicConnectionListener)await transportFactory.BindAsync(endpoint, features, cancellationToken: CancellationToken.None);
     }
 
-    public static async Task<QuicConnectionListener> CreateConnectionListenerFactory(TlsConnectionOptions tlsConnectionOptions, ILoggerFactory loggerFactory = null, ISystemClock systemClock = null)
+    public static async Task<QuicConnectionListener> CreateConnectionListenerFactory(TlsConnectionCallbackOptions tlsConnectionOptions, ILoggerFactory loggerFactory = null, ISystemClock systemClock = null)
     {
         var transportFactory = CreateTransportFactory(loggerFactory, systemClock);
 
@@ -75,7 +75,7 @@ internal static class QuicTestHelpers
         sslServerAuthenticationOptions.ClientCertificateRequired = clientCertificateRequired;
 
         var features = new FeatureCollection();
-        features.Set(new TlsConnectionOptions
+        features.Set(new TlsConnectionCallbackOptions
         {
             ApplicationProtocols = sslServerAuthenticationOptions.ApplicationProtocols,
             OnConnection = context => ValueTask.FromResult(sslServerAuthenticationOptions)

@@ -42,7 +42,7 @@ public class QuicTransportFactoryTests : TestApplicationErrorLoggerLoggedTest
         var quicTransportOptions = new QuicTransportOptions();
         var quicTransportFactory = new QuicTransportFactory(NullLoggerFactory.Instance, Options.Create(quicTransportOptions));
         var features = new FeatureCollection();
-        features.Set(new TlsConnectionOptions());
+        features.Set(new TlsConnectionCallbackOptions());
 
         // Act
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => quicTransportFactory.BindAsync(new IPEndPoint(0, 0), features: features, cancellationToken: CancellationToken.None).AsTask()).DefaultTimeout();
@@ -59,7 +59,7 @@ public class QuicTransportFactoryTests : TestApplicationErrorLoggerLoggedTest
         var quicTransportOptions = new QuicTransportOptions();
         var quicTransportFactory = new QuicTransportFactory(NullLoggerFactory.Instance, Options.Create(quicTransportOptions));
         var features = new FeatureCollection();
-        features.Set(new TlsConnectionOptions
+        features.Set(new TlsConnectionCallbackOptions
         {
             ApplicationProtocols = new List<SslApplicationProtocol>
             {

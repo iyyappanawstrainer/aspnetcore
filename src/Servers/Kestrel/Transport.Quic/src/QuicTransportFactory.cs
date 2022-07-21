@@ -49,7 +49,7 @@ internal sealed class QuicTransportFactory : IMultiplexedConnectionListenerFacto
             throw new ArgumentNullException(nameof(endpoint));
         }
 
-        var tlsConnectionOptions = features?.Get<TlsConnectionOptions>();
+        var tlsConnectionOptions = features?.Get<TlsConnectionCallbackOptions>();
 
         if (tlsConnectionOptions == null)
         {

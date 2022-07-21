@@ -439,7 +439,7 @@ public class HttpsTests : LoggedTest
 
         Assert.NotNull(bindFeatures);
 
-        var sslOptions = bindFeatures.Get<TlsConnectionOptions>();
+        var sslOptions = bindFeatures.Get<TlsConnectionCallbackOptions>();
         Assert.NotNull(sslOptions);
 
         var sslServerAuthenticationOptions = await sslOptions.OnConnection(new TlsConnectionCallbackContext());
@@ -483,7 +483,7 @@ public class HttpsTests : LoggedTest
 
         Assert.NotNull(bindFeatures);
 
-        var tlsOptions = bindFeatures.Get<TlsConnectionOptions>();
+        var tlsOptions = bindFeatures.Get<TlsConnectionCallbackOptions>();
         Assert.NotNull(tlsOptions);
 
         var sslServerAuthenticationOptions = await tlsOptions.OnConnection(new TlsConnectionCallbackContext());
@@ -598,7 +598,7 @@ public class HttpsTests : LoggedTest
 
         Assert.NotNull(bindFeatures);
 
-        var tlsOptions = bindFeatures.Get<TlsConnectionOptions>();
+        var tlsOptions = bindFeatures.Get<TlsConnectionCallbackOptions>();
         Assert.NotNull(tlsOptions);
 
         Assert.Collection(tlsOptions.ApplicationProtocols, p => Assert.Equal(SslApplicationProtocol.Http3, p));
@@ -648,7 +648,7 @@ public class HttpsTests : LoggedTest
 
         Assert.NotNull(bindFeatures);
 
-        var tlsOptions = bindFeatures.Get<TlsConnectionOptions>();
+        var tlsOptions = bindFeatures.Get<TlsConnectionCallbackOptions>();
         Assert.Collection(tlsOptions.ApplicationProtocols, p => Assert.Equal(SslApplicationProtocol.Http3, p));
 
         Assert.NotNull(tlsOptions.OnConnection);

@@ -116,7 +116,7 @@ public class QuicConnectionListenerTests : TestApplicationErrorLoggerLoggedTest
     {
         // Arrange
         await using var connectionListener = await QuicTestHelpers.CreateConnectionListenerFactory(
-            new TlsConnectionOptions
+            new TlsConnectionCallbackOptions
             {
                 ApplicationProtocols = new List<SslApplicationProtocol> { SslApplicationProtocol.Http3 },
                 OnConnection = context =>
@@ -146,7 +146,7 @@ public class QuicConnectionListenerTests : TestApplicationErrorLoggerLoggedTest
     {
         // Arrange
         await using var connectionListener = await QuicTestHelpers.CreateConnectionListenerFactory(
-            new TlsConnectionOptions
+            new TlsConnectionCallbackOptions
             {
                 ApplicationProtocols = new List<SslApplicationProtocol> { SslApplicationProtocol.Http3 },
                 OnConnection = context =>
