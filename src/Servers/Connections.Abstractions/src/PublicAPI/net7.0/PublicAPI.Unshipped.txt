@@ -1,7 +1,5 @@
 #nullable enable
 Microsoft.AspNetCore.Connections.TlsConnectionCallbackContext
-Microsoft.AspNetCore.Connections.TlsConnectionCallbackContext.CancellationToken.get -> System.Threading.CancellationToken
-Microsoft.AspNetCore.Connections.TlsConnectionCallbackContext.CancellationToken.set -> void
 Microsoft.AspNetCore.Connections.TlsConnectionCallbackContext.ClientHelloInfo.get -> System.Net.Security.SslClientHelloInfo
 Microsoft.AspNetCore.Connections.TlsConnectionCallbackContext.ClientHelloInfo.set -> void
 Microsoft.AspNetCore.Connections.TlsConnectionCallbackContext.Connection.get -> Microsoft.AspNetCore.Connections.BaseConnectionContext!
