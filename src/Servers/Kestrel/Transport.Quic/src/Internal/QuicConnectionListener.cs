@@ -17,7 +17,7 @@ namespace Microsoft.AspNetCore.Server.Kestrel.Transport.Quic.Internal;
 internal sealed class QuicConnectionListener : IMultiplexedConnectionListener, IAsyncDisposable
 {
     private readonly ILogger _log;
-    private readonly TlsConnectionCallbackOptions _tlsConnectionOptions;
+    private readonly TlsConnectionCallbackOptions _tlsConnectionCallbackOptions;
     private readonly QuicTransportContext _context;
     private readonly QuicListenerOptions _quicListenerOptions;
     private bool _disposed;
@@ -28,7 +28,7 @@ internal sealed class QuicConnectionListener : IMultiplexedConnectionListener, I
         QuicTransportOptions options,
         ILogger log,
         EndPoint endpoint,
-        TlsConnectionCallbackOptions tlsConnectionOptions)
+        TlsConnectionCallbackOptions tlsConnectionCallbackOptions)
     {
         if (!QuicListener.IsSupported)
         {
@@ -40,35 +40,38 @@ internal sealed class QuicConnectionListener : IMultiplexedConnectionListener, I
             throw new InvalidOperationException($"QUIC doesn't support listening on the configured endpoint type. Expected {nameof(IPEndPoint)} but got {endpoint.GetType().Name}.");
         }
 
-        if (tlsConnectionOptions.ApplicationProtocols.Count == 0)
+        if (tlsConnectionCallbackOptions.ApplicationProtocols.Count == 0)
         {
             throw new InvalidOperationException("No application protocols specified.");
         }
 
         _log = log;
-        _tlsConnectionOptions = tlsConnectionOptions;
+        _tlsConnectionCallbackOptions = tlsConnectionCallbackOptions;
         _context = new QuicTransportContext(_log, options);
         _quicListenerOptions = new QuicListenerOptions
         {
-            ApplicationProtocols = _tlsConnectionOptions.ApplicationProtocols,
+            ApplicationProtocols = _tlsConnectionCallbackOptions.ApplicationProtocols,
             ListenEndPoint = listenEndPoint,
             ListenBacklog = options.Backlog,
             ConnectionOptionsCallback = async (connection, helloInfo, cancellationToken) =>
             {
+                // Create the connection context inside the callback because it's passed
+                // to the connection callback. The field is then read once AcceptConnectionAsync
+                // finishes awaiting.
                 _currentAcceptingConnection = new QuicConnectionContext(connection, _context);
 
                 var context = new TlsConnectionCallbackContext
                 {
                     ClientHelloInfo = helloInfo,
-                    State = _tlsConnectionOptions.OnConnectionState,
+                    State = _tlsConnectionCallbackOptions.OnConnectionState,
                     Connection = _currentAcceptingConnection,
                 };
-                var serverAuthenticationOptions = await _tlsConnectionOptions.OnConnection(context, cancellationToken);
+                var serverAuthenticationOptions = await _tlsConnectionCallbackOptions.OnConnection(context, cancellationToken);
 
                 // If the callback didn't set protocols then use the listener's list of protocols.
                 if (serverAuthenticationOptions.ApplicationProtocols == null)
                 {
-                    serverAuthenticationOptions.ApplicationProtocols = _tlsConnectionOptions.ApplicationProtocols;
+                    serverAuthenticationOptions.ApplicationProtocols = _tlsConnectionCallbackOptions.ApplicationProtocols;
                 }
 
                 // If the SslServerAuthenticationOptions doesn't have a cert or protocols then the
@@ -114,7 +117,9 @@ internal sealed class QuicConnectionListener : IMultiplexedConnectionListener, I
     {
         _listener = await QuicListener.ListenAsync(_quicListenerOptions);
 
-        // Listener endpoint will resolve an ephemeral port, e.g. 127.0.0.1:0, into the actual port.
+        // EndPoint could be configured with an ephemeral port of 0.
+        // Listener endpoint will resolve an ephemeral port, e.g. 127.0.0.1:0, into the actual port
+        // so we need to update the public listener endpoint property.
         EndPoint = _listener.LocalEndPoint;
     }
 
@@ -128,6 +133,8 @@ internal sealed class QuicConnectionListener : IMultiplexedConnectionListener, I
         try
         {
             var quicConnection = await _listener.AcceptConnectionAsync(cancellationToken);
+
+            // _currentAcceptingConnection is set inside ConnectionOptionsCallback.
             var connectionContext = _currentAcceptingConnection;
 
             // Verify the connection context was created and set correctly.
